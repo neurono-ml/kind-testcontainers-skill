@@ -137,4 +137,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - [Testcontainers Documentation](https://testcontainers.com/)
 - [Kind Documentation](https://kind.sigs.k8s.io/)
-- [Integration Guide](./docs/integration-guide.md)
+- [Integration Guide](./references/integration-guide.md)
