@@ -1,0 +1,127 @@
+stages:
+  - test
+  - cleanup
+
+variables:
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  TESTCONTAINERS_RYUK_DISABLED: "false"
+  TESTCONTAINERS_RYUK_PORT: "8080"
+
+.default_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+.test_template: &test_template
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  rules:
+    - !reference [.default_rules, rules]
+  before_script:
+    - apk add --no-cache curl
+  after_script:
+    - echo "Collecting logs on failure..."
+    - docker ps -a || true
+    - docker logs $(docker ps -q --filter "label=org.testcontainers=true") 2>/dev/null || true
+
+test-java:
+  <<: *test_template
+  stage: test
+  image: maven:3.9-eclipse-temurin-21
+  services:
+    - name: docker:24-dind
+      alias: docker
+  script:
+    - cd src/java
+    - mvn test -B
+  tags:
+    - docker
+
+test-rust:
+  <<: *test_template
+  stage: test
+  image: rust:1.75
+  services:
+    - name: docker:24-dind
+      alias: docker
+  before_script:
+    - apt-get update && apt-get install -y docker.io
+    - curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.0.7.tgz | tar xzf - -C /usr/local/bin --strip-components=1
+  script:
+    - cd src/rust
+    - cargo test --test integration
+  tags:
+    - docker
+
+test-golang:
+  <<: *test_template
+  stage: test
+  image: golang:1.21
+  services:
+    - name: docker:24-dind
+      alias: docker
+  before_script:
+    - apt-get update && apt-get install -y docker.io
+  script:
+    - cd src/golang
+    - go test ./... -v -timeout 10m
+  tags:
+    - docker
+
+test-python:
+  <<: *test_template
+  stage: test
+  image: python:3.11
+  services:
+    - name: docker:24-dind
+      alias: docker
+  before_script:
+    - apt-get update && apt-get install -y docker.io
+    - pip install -r src/python/requirements.txt
+    - pip install -r src/python/requirements-dev.txt
+  script:
+    - cd src/python
+    - pytest tests/integration/ -v --timeout=300
+  tags:
+    - docker
+
+test-typescript:
+  <<: *test_template
+  stage: test
+  image: node:20
+  services:
+    - name: docker:24-dind
+      alias: docker
+  before_script:
+    - apt-get update && apt-get install -y docker.io
+    - cd src/typescript
+    - npm ci
+  script:
+    - cd src/typescript
+    - npm run test:integration
+  tags:
+    - docker
+
+cleanup:
+  stage: cleanup
+  image: docker:24
+  rules:
+    - when: always
+  script:
+    - echo "Stopping Ryuk..."
+    - docker rm -f $(docker ps -q --filter "name=testcontainers-ryuk") 2>/dev/null || true
+    
+    - echo "Removing Kind containers..."
+    - docker rm -f $(docker ps -q --filter "label=org.testcontainers=true") 2>/dev/null || true
+    
+    - echo "Removing temporary images..."
+    - docker images --filter "reference=*test*" -q | xargs -r docker rmi -f 2>/dev/null || true
+    
+    - echo "Cleanup complete!"
+  tags:
+    - docker
