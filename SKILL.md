@@ -1,5 +1,5 @@
 ---
-name: kind-testcontainers
+name: kind-testcontainers-skill
 description: Empowers AI agents to generate, validate, and maintain Kubernetes integration tests using Testcontainers and Kind (Kubernetes in Docker). Ensures tests are ephemeral, isolated, and executable in both local and CI/CD environments. Supports Java, Rust, Go, Python, TypeScript, Scala, and Ruby. Use when user needs to create or maintain Kubernetes integration tests, validate existing tests, or set up testing infrastructure for cloud-native applications.
 license: MIT
 metadata:
