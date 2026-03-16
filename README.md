@@ -6,30 +6,14 @@ A skill for AI agents that facilitates creation, validation, and maintenance of 
 
 ### Quick Installation
 
+Install skill from GitHub repository
+
 ```bash
-# Install skill from GitHub repository
-npx skills add <owner/repo>
-
-# Update to latest version
-npx skills update kind-testcontainers-skill
-
-# List installed skills
-npx skills list
+npx skills add https://github.com/neurono-ml/kind-testcontainers-skill
 ```
 
-### Quick Validation
-
-After installation, validate the skill is working:
-
 ```bash
-# Check if skill is loaded
-npx skills info kind-testcontainers-skill
-
-# Verify skill structure
-ls -la ~/.skills/kind-testcontainers-skill/
-
-# Test skill functionality
-npx skills exec kind-testcontainers-skill --help
+npx skills add neurono-ml/kind-testcontainers-skill
 ```
 
 ## Overview
